@@ -1,5 +1,6 @@
 """
-Модуль для логіки інтернет-магазину: товари, кошик та замовлення.
+Модуль для логіки інтернет-магазину.
+Містить класи товарів, кошика та замовлення.
 """
 import uuid
 from dataclasses import dataclass
@@ -8,19 +9,18 @@ from services import ShippingService
 
 
 class Product:
-    """Клас, що представляє товар у магазині."""
-
+    """Клас, що описує товар."""
     def __init__(self, name, price, available_amount):
         self.name = name
         self.price = price
         self.available_amount = available_amount
 
     def is_available(self, requested_amount):
-        """Перевіряє, чи достатньо товару на складі."""
+        """Перевірка наявності товару."""
         return self.available_amount >= requested_amount
 
     def buy(self, requested_amount):
-        """Зменшує кількість товару на складі."""
+        """Процес купівлі товару (зменшення залишку)."""
         self.available_amount -= requested_amount
 
     def __eq__(self, other):
@@ -39,32 +39,31 @@ class Product:
 
 
 class ShoppingCart:
-    """Клас кошика для покупок."""
-
+    """Клас, що описує кошик покупця."""
     def __init__(self):
         self.products = {}
 
     def contains_product(self, product):
-        """Перевіряє наявність товару в кошику."""
+        """Чи є товар у кошику."""
         return product in self.products
 
     def calculate_total(self):
-        """Рахує загальну вартість товарів."""
+        """Розрахунок загальної вартості замовлення."""
         return sum(p.price * count for p, count in self.products.items())
 
     def add_product(self, product: Product, amount: int):
-        """Додає товар до кошика з перевіркою залишків."""
+        """Додавання товару в кошик."""
         if not product.is_available(amount):
             raise ValueError(f"Product {product} has only {product.available_amount} items")
         self.products[product] = amount
 
     def remove_product(self, product):
-        """Видаляє товар з кошика."""
+        """Видалення товару з кошика."""
         if product in self.products:
             del self.products[product]
 
     def submit_cart_order(self):
-        """Оформлює товари з кошика та очищує його."""
+        """Підготовка списку ID товарів та очищення кошика."""
         product_ids = []
         for product, count in self.products.items():
             product.buy(count)
@@ -75,7 +74,7 @@ class ShoppingCart:
 
 @dataclass
 class Order:
-    """Клас, що представляє замовлення клієнта."""
+    """Клас для оформлення замовлення."""
     cart: ShoppingCart
     shipping_service: ShippingService
     order_id: str = None
@@ -85,22 +84,25 @@ class Order:
             self.order_id = str(uuid.uuid4())
 
     def place_order(self, shipping_type, due_date: datetime = None):
-        """Створює відправку на основі замовлення."""
+        """Оформлення доставки замовлення."""
         if not due_date:
             due_date = datetime.now(timezone.utc) + timedelta(seconds=3)
         product_ids = self.cart.submit_cart_order()
         print(due_date)
         return self.shipping_service.create_shipping(
-            shipping_type, product_ids, self.order_id, due_date
+            shipping_type,
+            product_ids,
+            self.order_id,
+            due_date
         )
 
 
-@dataclass
+@dataclass()
 class Shipment:
-    """Клас для відстеження статусу доставки."""
+    """Клас для перевірки статусу відправлення."""
     shipping_id: str
     shipping_service: ShippingService
 
     def check_shipping_status(self):
-        """Отримує поточний статус доставки."""
+        """Перевірка поточного статусу."""
         return self.shipping_service.check_status(self.shipping_id)
