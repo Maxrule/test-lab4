@@ -10,9 +10,11 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    # --- ДОДАВАННЯ МАТРИЧНОЇ СТРАТЕГІЇ ---
     strategy:
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.8", "3.9"]
+        fail-fast: false
 
     steps:
       - name: Check out the repository
@@ -26,7 +28,7 @@ jobs:
       - name: Start LocalStack
         run: |
           docker compose up -d
-          echo "Waiting for LocalStack to be ready..."
+          echo "Waiting for LocalStack..."
           sleep 10
 
       - name: Install dependencies
@@ -42,10 +44,13 @@ jobs:
         run: python -m unittest tests/test_unit.py
 
       - name: Run BDD Tests (Lab 1)
-        run: behave
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          behave
 
       - name: Run Integration Tests & Coverage (Lab 3)
         run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
           pytest tests/test_integration.py -v
           coverage run -m pytest tests/
           coverage report -m
