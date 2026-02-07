@@ -1,5 +1,5 @@
 from behave import given, when, then
-from eshop import Product
+from app.eshop import Product
 
 # Використовуємо {availability}, щоб приймати будь-яке число з лапок або без
 @given('The product with name "{name}" has availability of {availability}')
