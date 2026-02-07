@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9"]
-        fail-fast: false
 
     steps:
       - name: Check out the repository
